@@ -1,0 +1,35 @@
+# Build stage
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /source
+
+# Copy solution and project files for dependency restoration
+COPY *.sln .
+COPY */*.csproj ./
+RUN for file in $(ls *.csproj); do mkdir -p ${file%.*}/ && mv $file ${file%.*}/; done
+
+# Copy source code
+COPY . .
+
+# Restore dependencies
+RUN dotnet restore
+
+# Build and publish the specific project
+RUN dotnet publish KingsInns.Dining.Host/KingsInns.Dining.Host.csproj -c Release -o /app --no-restore
+
+# Runtime stage
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
+WORKDIR /app
+
+# Create non-root user for security
+RUN adduser --disabled-password --home /app --gecos '' appuser && chown -R appuser /app
+USER appuser
+
+# Copy published application
+COPY --from=build /app .
+
+# Configure environment
+EXPOSE 8080
+ENV ASPNETCORE_URLS=http://+:8080
+ENV ASPNETCORE_ENVIRONMENT=Production
+
+ENTRYPOINT ["dotnet", "KingsInns.Dining.Host.dll"]
