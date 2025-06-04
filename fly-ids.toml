@@ -1,0 +1,36 @@
+app = "4fa6d969-ids"
+primary_region = "jnb"
+kill_signal = "SIGINT"
+kill_timeout = "5s"
+
+[build]
+  dockerfile = "Dockerfile.ids.identity.hstai"
+
+[env]
+  ASPNETCORE_ENVIRONMENT = "Production"
+  
+  # Identity Server Configuration
+  SelfUrl = "https://4fa6d969-ids.fly.dev"
+  
+  # Database connection string - hardcoded, no secrets
+  ConnectionStrings__DefaultConnection = "Data Source=128.110.10.31;Initial Catalog=4fa6d969ids;User ID=sa;Password=jZAueoXbeUadhfbh3GaxY"
+  
+  # Seed data environment variables for Identity Server
+  SeedData__AllowedCorsOrigins__0 = "https://4fa6d969-web.fly.dev"
+  SeedData__AllowedCorsOrigins__1 = "https://4fa6d969-host.fly.dev"
+  SeedData__RedirectUris__0 = "https://4fa6d969-web.fly.dev/signin-oidc"
+  SeedData__PostLogoutRedirectUris__0 = "https://4fa6d969-web.fly.dev/signout-callback-oidc"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  min_machines_running = 0
+  processes = ["app"]
+
+# CRITICAL: Use [[vm]] section with double brackets, NOT arrays for individual properties
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory = "1gb"
